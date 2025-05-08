@@ -3,12 +3,13 @@
 import fs from 'fs';
 import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
-import fileUtils from './utils/fileUtils.js'
+import fileUtils from './utils/fileUtils.js';
 import stringUtils from './utils/stringUtils.js';
+import configUtils from './utils/configUtils.js';  
 
 async function run() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help')) {
     console.log(`
 Usage:
@@ -23,9 +24,6 @@ Example:
     process.exit(0);
   }
 
-  const templateFolderArgIndex = args.indexOf('--template');
-  const templateFolder = templateFolderArgIndex !== -1 ? args[templateFolderArgIndex + 1] : 'template';
-
   const {
     toPascalCase,
     toCamelCase,
@@ -35,15 +33,38 @@ Example:
   const { 
     loadTemplateFromFile,
     findTemplateFile,
+    findComponentFolder,
     ensureTemplateFolder
   } = fileUtils();
 
-  const templatePath = path.join(process.cwd(), templateFolder);
+  const {
+    loadConfig
+  } = configUtils(); 
+
+  const componentDir = await findComponentFolder(); 
+  const config = await loadConfig();  
+  const templateFolderArgIndex = args.indexOf('--template');
+  const cliTemplateFolder = templateFolderArgIndex !== -1 ? args[templateFolderArgIndex + 1] : null;
+  const templateFolder = cliTemplateFolder 
+    || (config?.templatePath ?? 'template');
+
+  const templatePath = path.isAbsolute(templateFolder)
+    ? templateFolder
+    : path.join(componentDir, templateFolder);
 
   let templateType = 'ts';
 
-  // Check if template folder exists; otherwise, ask user for language choice
-  if (!fs.existsSync(templatePath)) {
+  if (config?.templatePath) {
+    console.log(`⚙️ Using custom template path from config: ${templatePath}`);
+  }
+  if (cliTemplateFolder) {
+    console.log(`⚙️ Using template path from CLI: ${templatePath}`);
+  }
+
+  if (config?.defaultLanguage) {
+    templateType = config.defaultLanguage;
+    console.log(`⚙️ Using default language from config: ${templateType === 'ts' ? 'TypeScript' : 'JavaScript'}`);
+  } else if (!fs.existsSync(templatePath)) {
     templateType = await select({
       message: 'Which language are you using?',
       choices: [

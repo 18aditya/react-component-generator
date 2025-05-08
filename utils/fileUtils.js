@@ -28,7 +28,6 @@ export default function fileUtils() {
     return null;
   }
 
-  // ✨ NEW: Pass templateType ('ts' or 'js')
   function ensureTemplateFolder(templatePath, templateType = 'ts') {
     if (!fs.existsSync(templatePath)) {
       fs.mkdirSync(templatePath);
@@ -42,7 +41,41 @@ export default function fileUtils() {
     }
   }
 
+  async function findProjectRoot() {
+    let currentDir = process.cwd();
+
+    while (!fs.existsSync(path.join(currentDir, 'package.json'))) {
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        throw new Error('Could not find the project root');
+      }
+      currentDir = parentDir;
+    }
+
+    return currentDir;
+  }
+
+  async function findComponentFolder() {
+    const projectRoot = await findProjectRoot();
+    
+    const srcFolderPath = path.join(projectRoot, 'src');
+    if (!fs.existsSync(srcFolderPath)) {
+      console.error('❌ "src" folder not found in the project root.');
+      process.exit(1);
+    }
+  
+    const componentsFolderPath = path.join(srcFolderPath, 'components');
+    if (!fs.existsSync(componentsFolderPath)) {
+      console.log('⚠️ "components" folder not found inside src.');
+      return null;
+    }
+  
+    return componentsFolderPath;
+  }
+
   return {
+    findComponentFolder,
+    findProjectRoot,
     loadTemplateFromFile,
     findTemplateFile,
     ensureTemplateFolder

@@ -1,6 +1,6 @@
 {
   "name": "react-component-cli",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "This is a simple React component boilerplate generator for Javascript and Typescript",
   "main": "component-generator.js",
   "keywords": [],
