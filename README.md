@@ -1,138 +1,145 @@
-## 🚀 Component Generator CLI
+# 🚀 Component Generator CLI
 
-A simple CLI tool to generate React components & hooks **with optional props**, supporting **TypeScript** and **JavaScript**.
+This is a simple Node.js CLI tool to scaffold **React components and hooks** with customizable templates.
 
----
+## ✨ Features
 
-### 📦 Features
+- Generate **Page** components, **Hooks**, or **both**.
+- Supports **TypeScript** and **JavaScript**.
+- Prompts for:
+  - Component name
+  - What to generate (Page, Hook, or Both)
+  - Whether to generate with props
+- Customizable templates.
+- Automatically sets up default templates if none are found.
 
-* ✅ Generate **Page components** and/or **Hooks**
-* ✅ Supports **TypeScript (.ts/.tsx)** and **JavaScript (.js/.jsx)**
-* ✅ Auto-creates default templates if missing
-* ✅ Fully customizable template files
-* ✅ Interactive CLI prompts
-* ✅ `--help` command for quick usage info
+## 📂 Project Structure
 
----
+By default, the CLI:
 
-### 🛠 Usage
+- Locates the **template folder** inside:
+  
+  ```
+  <project-root>/src/components/template
+  ```
 
-```bash
-# Basic usage
-node component-generator.js
+- Creates generated files **in your current working directory** (where you run the command).
 
-# Using a custom template folder
-node component-generator.js --template my-templates
+Example:
 
-# Show help
-node component-generator.js --help
+```
+my-app/
+├── src/
+│   └── components/
+│       └── template/      ← 📁 Templates live here
+├── pages/
+├── some-folder/           ← 🛠️ You run the CLI here; generated files appear here
 ```
 
 ---
 
-### 👨‍💻 What It Does
-
-* **Step 1:** Prompts you to choose between TypeScript or JavaScript (if no template folder exists yet).
-* **Step 2:** Asks for the **base name** of your component (e.g., `userProfile`).
-* **Step 3:** Lets you pick what to generate:
-
-  * Page only
-  * Hook only
-  * Both Page + Hook
-* **Step 4:** Optionally include **props** in your component/hook.
-
-It will then:
-
-* ✅ Create a folder named `UserProfile/` (PascalCase)
-* ✅ Generate:
-
-  * **Page component** (e.g., `userProfile.tsx` + `index.ts`)
-  * **Hook** (e.g., `userProfile.hook.ts`)
-* ✅ Use templates from the specified folder (or default ones)
-
----
-
-### 📁 Template System
-
-When you run the CLI **for the first time**, it creates a default template folder (if not already present).
-
-Example structure:
-
-```
-template/
-├── Hook.ts
-├── HookWithProps.ts
-├── Page.tsx
-├── PageWithProps.tsx
-```
-
-**Or, for JS:**
-
-```
-template/
-├── Hook.js
-├── HookWithProps.js
-├── Page.jsx
-├── PageWithProps.jsx
-```
-
----
-
-#### 🔑 Available Placeholders:
-
-| Placeholder          | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| `__COMPONENT_NAME__` | Replaced with the PascalCase name of the component/page.    |
-| `__HOOK_NAME__`      | Replaced with the final hook name (e.g., `useUserProfile`). |
-
----
-
-### ✨ Example
-
-If you run:
+## ⚙️ Usage
 
 ```bash
 node component-generator.js
 ```
 
-and answer:
+You will be prompted to:
 
-* Base name: `userProfile`
-* Generate: `Both`
-* With props: `Yes`
+- Enter the base name (e.g., `userProfile`)
+- Select what to generate (Page, Hook, Both)
+- Confirm if you want props
 
-You'll get:
+### 🖥️ Command-line options
 
-```
-UserProfile/
-├── userProfile.tsx
-├── userProfile.hook.ts
-├── index.ts
+```bash
+node component-generator.js --template your-template-folder
 ```
 
-🚀 **With props support** based on your templates!
-
----
+| Option       | Description                                              |
+|--------------|----------------------------------------------------------|
+| `--template` | Specify a custom template folder (default: `template`)   |
 
 ### 🆘 Help
 
-To see help info at any time:
-
 ```bash
 node component-generator.js --help
 ```
 
 ---
 
-### 💡 Custom Templates
+## ⚡ Example
 
-You can customize your own templates in the `template/` folder (or whatever folder you specify with `--template`). The CLI **auto-loads and replaces placeholders** based on your file naming:
+```bash
+node component-generator.js
+```
 
-| Template Filename       | Purpose                          |
-| ----------------------- | -------------------------------- |
-| `Page.tsx` / `Page.jsx` | Page component **without props** |
-| `PageWithProps.tsx`     | Page component **with props**    |
-| `Hook.ts` / `Hook.js`   | Hook **without props**           |
-| `HookWithProps.ts`      | Hook **with props**              |
+**Prompts:**
+
+- Base name: `userProfile`
+- What to generate: `Both Page + Hook`
+- Generate with props: `Yes`
+
+**Creates:**
+
+```
+UserProfile/
+├── index.tsx
+├── userProfile.tsx
+└── userProfile.hook.tsx
+```
+
+---
+
+## 🛠️ Template System
+
+- The generator **looks for templates inside your components folder**.
+- Default template folder: 
+
+```
+<project-root>/src/components/template/
+```
+
+- Supported template files:
+  - `Page.tsx`
+  - `PageWithProps.tsx`
+  - `Hook.ts`
+  - `HookWithProps.ts`
+  - (Or `.js/.jsx` for JavaScript)
+
+If no templates are found, it **auto-creates default templates** so you can customize them.
+
+---
+
+## 📝 Configuration
+
+Add a `component-generator.config.json` file in the **root of your project** (next to `package.json`):
+
+```json
+{
+  "templatePath": "my-custom-templates",
+  "defaultLanguage": "ts"
+}
+```
+
+- `templatePath`: Custom template folder (relative to `/src/components` by default).
+- `defaultLanguage`: `"ts"` or `"js"`.
+
+---
+
+## 🗂️ How It Works
+
+1. **Finds the project root** (searches up until it finds `package.json`).
+2. **Locates the components folder** (`src/components`).
+3. **Uses your configured template folder** (or `template` by default).
+4. **Scaffolds files in your current working directory.**
+
+---
+
+## ❗ Notes
+
+- Templates are located relative to your **components folder**.
+- Generated files always go into **the current directory where you run the command** (this lets you scaffold inside any folder you want).
+- If the `src` or `components` folders are missing, it will warn you.
 
 ---
