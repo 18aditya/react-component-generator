@@ -1,40 +1,59 @@
+#!/usr/bin/env node
+
 import fs from 'fs';
 import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
-import { templates as defaultTemplates } from './template/component.js';
-
-// 1️⃣ Try to load custom templates
-async function loadTemplates() {
-  const configPath = path.join(process.cwd(), 'component-generator.config.js');
-  if (fs.existsSync(configPath)) {
-    try {
-      const { customTemplates } = await import(configPath);
-      console.log('✅ Loaded custom templates from component-generator.config.js');
-      return { ...defaultTemplates, ...customTemplates };
-    } catch (err) {
-      console.error('⚠️ Failed to load custom templates. Using default templates.', err.message);
-    }
-  }
-  return defaultTemplates;
-}
-
-function toPascalCase(str) {
-  return str
-    .replace(/(^\w|[-_]\w)/g, (match) => match.replace(/[-_]/, '').toUpperCase());
-}
-
-function toCamelCase(str) {
-  const pascal = toPascalCase(str);
-  return pascal.charAt(0).toLowerCase() + pascal.slice(1);
-}
-
-function getFinalHookName(baseName) {
-  const pascal = toPascalCase(baseName);
-  return `use${pascal}`;
-}
+import fileUtils from './utils/fileUtils.js'
+import stringUtils from './utils/stringUtils.js';
 
 async function run() {
-  const templates = await loadTemplates();  // 👈 Use merged templates
+  const args = process.argv.slice(2);
+  
+  if (args.includes('--help')) {
+    console.log(`
+Usage:
+  node component-generator.js [--template your-template-folder]
+
+Options:
+  --template   Specify a custom template folder (default is 'template')
+
+Example:
+  node component-generator.js --template my-templates
+`);
+    process.exit(0);
+  }
+
+  const templateFolderArgIndex = args.indexOf('--template');
+  const templateFolder = templateFolderArgIndex !== -1 ? args[templateFolderArgIndex + 1] : 'template';
+
+  const {
+    toPascalCase,
+    toCamelCase,
+    getFinalHookName,
+  } = stringUtils();
+
+  const { 
+    loadTemplateFromFile,
+    findTemplateFile,
+    ensureTemplateFolder
+  } = fileUtils();
+
+  const templatePath = path.join(process.cwd(), templateFolder);
+
+  let templateType = 'ts';
+
+  // Check if template folder exists; otherwise, ask user for language choice
+  if (!fs.existsSync(templatePath)) {
+    templateType = await select({
+      message: 'Which language are you using?',
+      choices: [
+        { name: 'TypeScript (.ts/.tsx)', value: 'ts' },
+        { name: 'JavaScript (.js/.jsx)', value: 'js' },
+      ],
+    });
+  }
+
+  ensureTemplateFolder(templatePath, templateType);
 
   const baseName = await input({ message: "What's the base name (e.g., userProfile)?" });
   const target = await select({
@@ -53,28 +72,56 @@ async function run() {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 
+  // --- Generate Page ---
   if (target === 'page' || target === 'both') {
     const pageName = toPascalCase(baseName);
-    const pageFile = path.join(folderPath, `${toCamelCase(baseName)}.tsx`);
-    const pageTemplate = withProps
-      ? templates.pageWithProps(pageName)
-      : templates.pageNoProps(pageName);
+    const pageFileName = `${toCamelCase(baseName)}.${templateType}`;
+    const pageFilePath = path.join(folderPath, pageFileName);
+
+    const pageTemplateFile = findTemplateFile(templatePath, withProps ? 'PageWithProps' : 'Page', ['.tsx', '.jsx']);
+    if (!pageTemplateFile) {
+      console.error('❌ No page template found.');
+      return;
+    }
+
+    const pageTemplate = loadTemplateFromFile(pageTemplateFile, {
+      __COMPONENT_NAME__: pageName,
+    });
+    if (!pageTemplate) {
+      console.error('❌ Failed to load page template content.');
+      return;
+    }
+
     const indexContent = `export { default } from './${toCamelCase(baseName)}';\n`;
 
-    fs.writeFileSync(pageFile, pageTemplate.trim());
-    fs.writeFileSync(path.join(folderPath, 'index.ts'), indexContent);
-    console.log(`✅ Created Page: ${pageFile}`);
-    console.log('✅ Created index.ts');
+    fs.writeFileSync(pageFilePath, pageTemplate.trim());
+    fs.writeFileSync(path.join(folderPath, `index.${templateType}`), indexContent);
+    console.log(`✅ Created Page: ${pageFilePath}`);
+    console.log(`✅ Created index.${templateType}`);
   }
 
+  // --- Generate Hook ---
   if (target === 'hook' || target === 'both') {
     const hookName = getFinalHookName(baseName);
-    const hookFile = path.join(folderPath, `${toCamelCase(baseName)}.hook.ts`);
-    const hookTemplate = withProps
-      ? templates.hookWithProps(hookName)
-      : templates.hookNoProps(hookName);
-    fs.writeFileSync(hookFile, hookTemplate.trim());
-    console.log(`✅ Created Hook: ${hookFile}`);
+    const hookFileName = `${toCamelCase(baseName)}.hook.${templateType}`;
+    const hookFilePath = path.join(folderPath, hookFileName);
+
+    const hookTemplateFile = findTemplateFile(templatePath, withProps ? 'HookWithProps' : 'Hook', ['.ts', '.js']);
+    if (!hookTemplateFile) {
+      console.error('❌ No hook template found.');
+      return;
+    }
+
+    const hookTemplate = loadTemplateFromFile(hookTemplateFile, {
+      __HOOK_NAME__: hookName,
+    });
+    if (!hookTemplate) {
+      console.error('❌ Failed to load hook template content.');
+      return;
+    }
+
+    fs.writeFileSync(hookFilePath, hookTemplate.trim());
+    console.log(`✅ Created Hook: ${hookFilePath}`);
   }
 
   console.log('🎉 Generation complete!');
