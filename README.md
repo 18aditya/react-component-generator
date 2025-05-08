@@ -1,154 +1,138 @@
-# 🚀 react-component-generator
+## 🚀 Component Generator CLI
 
-A simple **CLI tool** to quickly generate React **components and hooks** with optional props support.
-
-👉 Perfect for **scaffolding** new pages or hooks in seconds—ideal for projects using **TypeScript, React, and a feature-based folder structure**.
+A simple CLI tool to generate React components & hooks **with optional props**, supporting **TypeScript** and **JavaScript**.
 
 ---
 
-## ✨ Features
+### 📦 Features
 
-* ✅ Generate **React components** (pages) and **custom hooks**
-* ✅ Supports **props interfaces** (optional)
-* ✅ Automatically creates:
-
-  * `.tsx` file for the component
-  * `.hook.ts` file for the hook
-  * `index.ts` for clean exports
-* ✅ **Custom templates** via `component-generator.config.js`
-* ✅ Uses **interactive prompts** for a smooth developer experience
+* ✅ Generate **Page components** and/or **Hooks**
+* ✅ Supports **TypeScript (.ts/.tsx)** and **JavaScript (.js/.jsx)**
+* ✅ Auto-creates default templates if missing
+* ✅ Fully customizable template files
+* ✅ Interactive CLI prompts
+* ✅ `--help` command for quick usage info
 
 ---
 
-## 📦 Installation
+### 🛠 Usage
 
 ```bash
-npm install -g react-component-generator
-```
+# Basic usage
+node component-generator.js
 
-Or use with `npx`:
+# Using a custom template folder
+node component-generator.js --template my-templates
 
-```bash
-npx react-component-generator
+# Show help
+node component-generator.js --help
 ```
 
 ---
 
-## 🛠 Usage
+### 👨‍💻 What It Does
 
-Run:
+* **Step 1:** Prompts you to choose between TypeScript or JavaScript (if no template folder exists yet).
+* **Step 2:** Asks for the **base name** of your component (e.g., `userProfile`).
+* **Step 3:** Lets you pick what to generate:
 
-```bash
-component-generator
-```
+  * Page only
+  * Hook only
+  * Both Page + Hook
+* **Step 4:** Optionally include **props** in your component/hook.
 
-You’ll be prompted to:
+It will then:
 
-1️⃣ Enter the base name (e.g., `userProfile`)
+* ✅ Create a folder named `UserProfile/` (PascalCase)
+* ✅ Generate:
 
-2️⃣ Choose what to generate:
-
-* Page only
-* Hook only
-* Both Page + Hook
-
-3️⃣ Choose whether to generate **with props**.
+  * **Page component** (e.g., `userProfile.tsx` + `index.ts`)
+  * **Hook** (e.g., `userProfile.hook.ts`)
+* ✅ Use templates from the specified folder (or default ones)
 
 ---
 
-## 📁 Output Example
+### 📁 Template System
 
-### 1️⃣ You enter:
+When you run the CLI **for the first time**, it creates a default template folder (if not already present).
 
-* **Base name:** `userProfile`
-* **Generate:** `Both Page + Hook`
-* **With props:** ✅ Yes
+Example structure:
 
-### 2️⃣ The CLI generates:
+```
+template/
+├── Hook.ts
+├── HookWithProps.ts
+├── Page.tsx
+├── PageWithProps.tsx
+```
+
+**Or, for JS:**
+
+```
+template/
+├── Hook.js
+├── HookWithProps.js
+├── Page.jsx
+├── PageWithProps.jsx
+```
+
+---
+
+#### 🔑 Available Placeholders:
+
+| Placeholder          | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| `__COMPONENT_NAME__` | Replaced with the PascalCase name of the component/page.    |
+| `__HOOK_NAME__`      | Replaced with the final hook name (e.g., `useUserProfile`). |
+
+---
+
+### ✨ Example
+
+If you run:
+
+```bash
+node component-generator.js
+```
+
+and answer:
+
+* Base name: `userProfile`
+* Generate: `Both`
+* With props: `Yes`
+
+You'll get:
 
 ```
 UserProfile/
-├── index.ts
+├── userProfile.tsx
 ├── userProfile.hook.ts
-└── userProfile.tsx
+├── index.ts
 ```
 
-### 3️⃣ `userProfile.tsx` (Page with Props):
+🚀 **With props support** based on your templates!
 
-```tsx
-import React from 'react';
+---
 
-interface UserProfileProps {
-  title?: string;
-  onClick?: () => void;
-}
+### 🆘 Help
 
-const UserProfile: React.FC<UserProfileProps> = ({ title, onClick }) => {
-  return <></>;
-};
+To see help info at any time:
 
-export default UserProfile;
+```bash
+node component-generator.js --help
 ```
 
 ---
 
-### 4️⃣ `userProfile.hook.ts` (Hook with Props):
+### 💡 Custom Templates
 
-```ts
-import { useState } from 'react';
+You can customize your own templates in the `template/` folder (or whatever folder you specify with `--template`). The CLI **auto-loads and replaces placeholders** based on your file naming:
 
-interface UseUserProfileProps {
-  initialValue?: unknown;
-}
-
-export const useUserProfile = ({ initialValue }: UseUserProfileProps) => {
-  const [state, setState] = useState(initialValue);
-  return { state, setState };
-};
-```
-
----
-
-## 🖌 Custom Templates
-
-You can customize the templates by adding a `component-generator.config.js` file at your project root.
-
-### Example:
-
-```js
-// component-generator.config.js
-
-export const customTemplates = {
-  pageWithProps: (name) => `
-    import React from 'react';
-
-    interface ${name}Props {
-      customProp: string;
-    }
-
-    const ${name}: React.FC<${name}Props> = ({ customProp }) => {
-      return <div>{customProp}</div>;
-    };
-
-    export default ${name};
-  `,
-  // You can also override:
-  // pageNoProps, hookNoProps, hookWithProps
-};
-```
-
----
-
-## 💡 Why Use This?
-
-* Save time creating repetitive boilerplate.
-* Keep your codebase **consistent**.
-* Supports **customization** out of the box.
-
----
-
-## 🔗 License
-
-MIT
+| Template Filename       | Purpose                          |
+| ----------------------- | -------------------------------- |
+| `Page.tsx` / `Page.jsx` | Page component **without props** |
+| `PageWithProps.tsx`     | Page component **with props**    |
+| `Hook.ts` / `Hook.js`   | Hook **without props**           |
+| `HookWithProps.ts`      | Hook **with props**              |
 
 ---
